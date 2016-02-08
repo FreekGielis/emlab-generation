@@ -88,6 +88,25 @@ public class PowerPlant {
     private double expectedEndOfLife;
     private double actualNominalCapacity;
 
+    public double ageFraction;
+    public double profitability;
+
+    public double getProfitability() {
+        return profitability;
+    }
+
+    public void setProfitability(double profitability) {
+        this.profitability = profitability;
+    }
+
+    public double getAgeFraction() {
+        return ageFraction;
+    }
+
+    public void setAgeFraction(double ageFraction) {
+        this.ageFraction = ageFraction;
+    }
+
     public boolean isOperational(long currentTick) {
 
         double finishedConstruction = getConstructionStartTime()

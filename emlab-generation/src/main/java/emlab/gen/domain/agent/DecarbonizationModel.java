@@ -56,6 +56,27 @@ public class DecarbonizationModel extends AbstractAgent implements Agent {
 
     private boolean noPrivateIntermittentRESInvestment;
 
+    private boolean economicDismantlingActive;
+
+    private int runID;
+
+    private int investmentRound;
+
+    public int getInvestmentRound() {
+        return investmentRound;
+    }
+
+    public void setInvestmentRound(int investmentRound) {
+        this.investmentRound = investmentRound;
+    }
+
+    public int getRunID() {
+        return runID;
+    }
+
+    public void setRunID(int runID) {
+        this.runID = runID;
+    }
 
     @SimulationParameter(label = "Simulation Length", from = 0, to = 75)
     private double simulationLength;
@@ -77,6 +98,7 @@ public class DecarbonizationModel extends AbstractAgent implements Agent {
 
     @SimulationParameter(label = "Deletion age")
     private long deletionAge;
+
 
     public boolean isRealRenewableDataImplemented() {
         return realRenewableDataImplemented;
@@ -286,6 +308,14 @@ public class DecarbonizationModel extends AbstractAgent implements Agent {
 
     public void setNoPrivateIntermittentRESInvestment(boolean noPrivateIntermittentRESInvestment) {
         this.noPrivateIntermittentRESInvestment = noPrivateIntermittentRESInvestment;
+    }
+
+    public boolean isEconomicDismantlingActive() {
+        return economicDismantlingActive;
+    }
+
+    public void setEconomicDismantlingActive(boolean economicDismantlingActive) {
+        this.economicDismantlingActive = economicDismantlingActive;
     }
 
 }

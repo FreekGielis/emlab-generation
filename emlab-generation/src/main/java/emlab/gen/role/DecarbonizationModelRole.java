@@ -37,6 +37,7 @@ import emlab.gen.role.capacitymechanisms.ProcessAcceptedPowerPlantDispatchRolein
 import emlab.gen.role.capacitymechanisms.StrategicReserveOperatorRole;
 import emlab.gen.role.co2policy.MarketStabilityReserveRole;
 import emlab.gen.role.co2policy.RenewableAdaptiveCO2CapRole;
+import emlab.gen.role.investment.DismantlePowerPlantOperationalLossRole;
 import emlab.gen.role.investment.DismantlePowerPlantPastTechnicalLifetimeRole;
 import emlab.gen.role.investment.GenericInvestmentRole;
 import emlab.gen.role.market.ClearCommodityMarketRole;
@@ -115,6 +116,10 @@ public class DecarbonizationModelRole extends AbstractRole<DecarbonizationModel>
     private DetermineResidualLoadCurvesForTwoCountriesRole determineResidualLoadCurve;
     @Autowired
     private CreatingFinancialReports creatingFinancialReports;
+    @Autowired
+    private DismantlePowerPlantOperationalLossRole dismantlePowerPlantOperationalLossRole;
+
+
 
     @Autowired
     Reps reps;
@@ -146,20 +151,44 @@ public class DecarbonizationModelRole extends AbstractRole<DecarbonizationModel>
         if (model.isRealRenewableDataImplemented())
             determineResidualLoadCurve.act(model);
 
-        logger.warn("  0. Dismantling & paying loans");
-        for (EnergyProducer producer : reps.genericRepository.findAllAtRandom(EnergyProducer.class)) {
-            dismantlePowerPlantRole.act(producer);
-            payForLoansRole.act(producer);
-            // producer.act(dismantlePowerPlantRole);
-            // producer.act(payForLoansRole);
+        Timer timerMarket = new Timer();
+        timerMarket.start();
+
+        logger.warn("  0b. Dismantling");
+        timerMarket.reset();
+        timerMarket.start();
+
+        // logger.warn("  0. Dismantling & paying loans");
+
+        if (model.isEconomicDismantlingActive()) {
+            for (ElectricitySpotMarket market : reps.marketRepository.findAllElectricitySpotMarketsAsList()) {
+                dismantlePowerPlantOperationalLossRole.act(market);
+            }
+        } else {
+            for (EnergyProducer producer : reps.genericRepository.findAllAtRandom(EnergyProducer.class)) {
+                dismantlePowerPlantRole.act(producer);
+            }
         }
+
+        timerMarket.stop();
+        logger.warn("        took: {} seconds.", timerMarket.seconds());
+
+        logger.warn("  0c. Paying loans");
+        timerMarket.reset();
+        timerMarket.start();
+        for (EnergyProducer producer : reps.genericRepository.findAllAtRandom(EnergyProducer.class)) {
+            payForLoansRole.act(producer);
+        }
+        timerMarket.stop();
+        logger.warn("        took: {} seconds.", timerMarket.seconds());
 
         /*
          * Determine fuel mix of power plants
          */
-        Timer timerMarket = new Timer();
-        timerMarket.start();
+
         logger.warn("  1. Determining fuel mix");
+        timerMarket.reset();
+        timerMarket.start();
         for (EnergyProducer producer : reps.genericRepository.findAllAtRandom(EnergyProducer.class)) {
             determineFuelMixRole.act(producer);
             // producer.act(determineFuelMixRole);
@@ -189,7 +218,8 @@ public class DecarbonizationModelRole extends AbstractRole<DecarbonizationModel>
         }
 
         /*
-         * Clear electricity spot and CO2 markets and determine also the commitment of powerplants.
+         * Clear electricity spot and CO2 markets and determine also the
+         * commitment of powerplants.
          */
         timerMarket.reset();
         timerMarket.start();
@@ -319,13 +349,18 @@ public class DecarbonizationModelRole extends AbstractRole<DecarbonizationModel>
 
         logger.warn("\t Private investment");
         if (getCurrentTick() > 1) {
+            int investmentRoundCount = 0;
             boolean someOneStillWillingToInvest = true;
             while (someOneStillWillingToInvest) {
+                logger.warn("newInvestmentRound!");
                 someOneStillWillingToInvest = false;
                 for (EnergyProducer producer : reps.energyProducerRepository
                         .findAllEnergyProducersExceptForRenewableTargetInvestorsAtRandom()) {
                     // invest in new plants
                     if (producer.isWillingToInvest()) {
+                        investmentRoundCount += 1;
+                        logger.warn("CopyInvRound" + investmentRoundCount);
+                        model.setInvestmentRound(investmentRoundCount);
                         genericInvestmentRole.act(producer);
                         // producer.act(investInPowerGenerationTechnologiesRole);
                         someOneStillWillingToInvest = true;

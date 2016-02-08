@@ -75,6 +75,15 @@ public class EnergyProducer extends DecarbonizationAgent implements Agent {
     private int riskAversionType; // neutral: 0, CARA: 1, CRRA: 2
     private double riskAversionCoefficientCARA;
     private double riskAversionCoefficientCRRA;
+    private double percentageRiskPremium;
+
+    public double getPercentageRiskPremium() {
+        return percentageRiskPremium;
+    }
+
+    public void setPercentageRiskPremium(double percentageRiskPremium) {
+        this.percentageRiskPremium = percentageRiskPremium;
+    }
 
     public int getRiskAversionType() {
         return riskAversionType;
